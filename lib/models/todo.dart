@@ -1,4 +1,27 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+enum TodoPriority {
+  mainQuest,
+  sideQuest;
+
+  String get displayName {
+    switch (this) {
+      case TodoPriority.mainQuest:
+        return 'Main Quest';
+      case TodoPriority.sideQuest:
+        return 'Side Quest';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case TodoPriority.mainQuest:
+        return Icons.star;
+      case TodoPriority.sideQuest:
+        return Icons.assignment;
+    }
+  }
+}
 
 class Todo {
   String id;
@@ -6,6 +29,8 @@ class Todo {
   bool isCompleted;
   DateTime createdAt;
   DateTime? completedAt;
+  bool isArchived;
+  TodoPriority priority;
 
   Todo({
     required this.id,
@@ -13,7 +38,39 @@ class Todo {
     this.isCompleted = false,
     required this.createdAt,
     this.completedAt,
+    this.isArchived = false,
+    this.priority = TodoPriority.sideQuest,
   });
+
+  // ... (previous methods remain the same)
+
+  Todo copyWith({
+    String? task,
+    bool? isCompleted,
+    DateTime? completedAt,
+    bool? isArchived,
+    TodoPriority? priority,
+  }) {
+    return Todo(
+      id: id,
+      task: task ?? this.task,
+      isCompleted: isCompleted ?? this.isCompleted,
+      createdAt: createdAt,
+      completedAt: completedAt ?? this.completedAt,
+      isArchived: isArchived ?? this.isArchived,
+      priority: priority ?? this.priority,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'task': task,
+        'isCompleted': isCompleted,
+        'createdAt': createdAt.toIso8601String(),
+        'completedAt': completedAt?.toIso8601String(),
+        'isArchived': isArchived,
+        'priority': priority.index,
+      };
 
   Todo.fromJson(Map<String, dynamic> json)
       : id = json['id'],
@@ -22,47 +79,9 @@ class Todo {
         createdAt = DateTime.parse(json['createdAt']),
         completedAt = json['completedAt'] != null
             ? DateTime.parse(json['completedAt'])
-            : null;
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'task': task,
-        'isCompleted': isCompleted,
-        'createdAt': createdAt.toIso8601String(),
-        'completedAt': completedAt?.toIso8601String(),
-      };
-}
-
-class TodoList extends ChangeNotifier {
-  List<Todo> _todos = [];
-  List<Todo> get todos => _todos;
-  List<Todo> get activeTodos =>
-      _todos.where((todo) => !todo.isCompleted).toList();
-  List<Todo> get completedTodos =>
-      _todos.where((todo) => todo.isCompleted).toList();
-
-  void addTodo(String task) {
-    final todo = Todo(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      task: task,
-      createdAt: DateTime.now(),
-    );
-    _todos.add(todo);
-    notifyListeners();
-  }
-
-  void toggleTodo(String id) {
-    final todoIndex = _todos.indexWhere((todo) => todo.id == id);
-    if (todoIndex != -1) {
-      _todos[todoIndex].isCompleted = !_todos[todoIndex].isCompleted;
-      _todos[todoIndex].completedAt =
-          _todos[todoIndex].isCompleted ? DateTime.now() : null;
-      notifyListeners();
-    }
-  }
-
-  void setTodos(List<Todo> todos) {
-    _todos = todos;
-    notifyListeners();
-  }
+            : null,
+        isArchived = json['isArchived'] ?? false,
+        priority = json['priority'] != null
+            ? TodoPriority.values[json['priority']]
+            : TodoPriority.sideQuest;
 }
