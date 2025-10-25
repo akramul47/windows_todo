@@ -21,6 +21,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final _textController = TextEditingController();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _isWindowHovered = false;
+  bool _isDragging = false;
+  TodoPriority? _draggingFromPriority;
 
   @override
   void initState() {
@@ -64,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.only(bottom: 8),
           child: Row(
             children: [
               Icon(
@@ -84,31 +86,112 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         DragTarget<Todo>(
           builder: (context, candidateData, rejectedData) {
-            return Container(
+            final bool isHovering = candidateData.isNotEmpty && 
+                candidateData.first?.priority != priority;
+            final bool showDropZone = _isDragging && 
+                _draggingFromPriority != null &&
+                _draggingFromPriority != priority;
+            
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              margin: const EdgeInsets.symmetric(horizontal: 0),
+              padding: const EdgeInsets.all(0),
               decoration: BoxDecoration(
-                color: candidateData.isNotEmpty
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
+                color: isHovering
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+                    : showDropZone
+                        ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isHovering
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.6)
+                      : showDropZone
+                          ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+                          : Colors.transparent,
+                  width: isHovering ? 2.5 : showDropZone ? 2 : 0,
+                ),
               ),
-              child: ReorderableListView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: todos
-                    .map((todo) => _buildDraggableTask(todo, priority))
-                    .toList(),
-                onReorder: (oldIndex, newIndex) {
-                  final todoList = context.read<TodoList>();
-                  todoList.reorderTodo(priority, oldIndex, newIndex);
-                  _saveTodos();
-                },
+              child: Column(
+                children: [
+                  // Show drop zone message when dragging from another section
+                  if (showDropZone)
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      decoration: BoxDecoration(
+                        color: isHovering
+                            ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(
+                            isHovering ? 0.4 : 0.2
+                          ),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          isHovering ? 'Release to add here' : 'Drag here to add to $title',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: isHovering ? FontWeight.w600 : FontWeight.w500,
+                            color: Theme.of(context).colorScheme.primary.withOpacity(
+                              isHovering ? 1 : 0.7
+                            ),
+                          ),
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ),
+                  // Show tasks
+                  if (todos.isNotEmpty)
+                    Column(
+                      children: todos
+                          .map((todo) => _buildDraggableTask(todo, priority))
+                          .toList(),
+                    ),
+                ],
               ),
             );
           },
+          onWillAccept: (data) => data != null && data.priority != priority,
           onAccept: (Todo todo) {
+            setState(() {
+              _isDragging = false;
+              _draggingFromPriority = null;
+            });
             final todoList = context.read<TodoList>();
             todoList.changeTodoPriority(todo.id, priority);
             _saveTodos();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Moved to $title',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+                duration: const Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Colors.green.shade700,
+                margin: const EdgeInsets.all(8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          },
+          onLeave: (data) {
+            // Optional: could add feedback when leaving drop zone
           },
         ),
       ],
@@ -116,61 +199,170 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDraggableTask(Todo todo, TodoPriority priority) {
-    return LongPressDraggable<Todo>(
+    return DragTarget<Todo>(
       key: ValueKey(todo.id),
-      data: todo,
-      feedback: Material(
-        elevation: 4,
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(todo.task, style: AppTheme.taskTextStyle),
-        ),
-      ),
-      childWhenDragging: Container(
-        color: Colors.transparent,
-        height: 80,
-      ),
-      child: GlassTaskCard(
-        todo: todo,
-        isCompleted: false,
-        onToggle: (todo) {
-          context.read<TodoList>().toggleTodo(todo.id);
-          _saveTodos();
-        },
-        onEdit: (todo, newTask) {
-          context.read<TodoList>().editTodo(todo.id, newTask);
-          _saveTodos();
-        },
-        onDelete: (todo) {
-          context.read<TodoList>().deleteTodo(todo.id);
-          _saveTodos();
-          _showUndoSnackBar(
-            'Task deleted',
-            () {
-              context
-                  .read<TodoList>()
-                  .addTodo(todo.task, priority: todo.priority);
-              _saveTodos();
-            },
-          );
-        },
-        onArchive: (todo) {
-          context.read<TodoList>().archiveTodo(todo.id);
-          _saveTodos();
-          _showUndoSnackBar(
-            'Task archived',
-            () {
-              context.read<TodoList>().unarchiveTodo(todo.id);
-              _saveTodos();
-            },
-          );
-        },
-      ),
+      onWillAccept: (data) => data != null && data.id != todo.id,
+      onAccept: (draggedTodo) {
+        setState(() {
+          _isDragging = false;
+          _draggingFromPriority = null;
+        });
+        final todoList = context.read<TodoList>();
+        if (draggedTodo.priority == priority) {
+          // Reordering within the same section
+          final todos = priority == TodoPriority.mainQuest
+              ? todoList.mainQuestTodos
+              : todoList.sideQuestTodos;
+          final oldIndex = todos.indexWhere((t) => t.id == draggedTodo.id);
+          final newIndex = todos.indexWhere((t) => t.id == todo.id);
+          if (oldIndex != -1 && newIndex != -1) {
+            todoList.reorderTodo(priority, oldIndex, newIndex);
+            _saveTodos();
+          }
+        }
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isHovering = candidateData.isNotEmpty;
+        return Column(
+          children: [
+            if (isHovering && candidateData.first?.priority == priority)
+              Container(
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+              ),
+            LongPressDraggable<Todo>(
+              data: todo,
+              delay: const Duration(milliseconds: 300),
+              hapticFeedbackOnStart: true,
+              onDragStarted: () {
+                setState(() {
+                  _isDragging = true;
+                  _draggingFromPriority = priority;
+                });
+              },
+              onDragEnd: (details) {
+                setState(() {
+                  _isDragging = false;
+                  _draggingFromPriority = null;
+                });
+              },
+              onDraggableCanceled: (velocity, offset) {
+                setState(() {
+                  _isDragging = false;
+                  _draggingFromPriority = null;
+                });
+              },
+              feedback: Material(
+                elevation: 12,
+                borderRadius: BorderRadius.circular(12),
+                shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                child: Container(
+                  width: 300,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).cardColor,
+                        Theme.of(context).cardColor.withOpacity(0.95),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                      width: 2.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                        blurRadius: 24,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.drag_indicator,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          todo.task,
+                          style: AppTheme.taskTextStyle.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              childWhenDragging: Opacity(
+                opacity: 0.2,
+                child: GlassTaskCard(
+                  todo: todo,
+                  isCompleted: false,
+                  onToggle: (todo) {},
+                  onEdit: (todo, newTask) {},
+                  onDelete: (todo) {},
+                  onArchive: (todo) {},
+                ),
+              ),
+              child: GlassTaskCard(
+                todo: todo,
+                isCompleted: false,
+                onToggle: (todo) {
+                  context.read<TodoList>().toggleTodo(todo.id);
+                  _saveTodos();
+                },
+                onEdit: (todo, newTask) {
+                  context.read<TodoList>().editTodo(todo.id, newTask);
+                  _saveTodos();
+                },
+                onDelete: (todo) {
+                  context.read<TodoList>().deleteTodo(todo.id);
+                  _saveTodos();
+                  _showUndoSnackBar(
+                    'Task deleted',
+                    () {
+                      context
+                          .read<TodoList>()
+                          .addTodo(todo.task, priority: todo.priority);
+                      _saveTodos();
+                    },
+                  );
+                },
+                onArchive: (todo) {
+                  context.read<TodoList>().archiveTodo(todo.id);
+                  _saveTodos();
+                  _showUndoSnackBar(
+                    'Task archived',
+                    () {
+                      context.read<TodoList>().unarchiveTodo(todo.id);
+                      _saveTodos();
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -203,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Row(
                           children: [
-                            Text('Tasks', style: AppTheme.headerStyle),
+                            Text('Quest', style: AppTheme.headerStyle),
                             const Spacer(),
                             IconButton(
                               icon: const Icon(Icons.archive_outlined),
