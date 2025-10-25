@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
@@ -52,23 +53,25 @@ class AppTheme {
   );
 
   // Text styles
-  static TextStyle headerStyle = GoogleFonts.spaceMono(
+  static TextStyle headerStyle = GoogleFonts.outfit(
     fontSize: 24,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.w700,
     letterSpacing: -0.5,
     color: textDark,
   );
 
-  static TextStyle taskTextStyle = GoogleFonts.inter(
+  static TextStyle taskTextStyle = GoogleFonts.outfit(
     fontSize: 16,
     fontWeight: FontWeight.w500,
+    letterSpacing: 0.2,
+    height: 1.4,
     color: textDark,
   );
 
-  static TextStyle sectionHeaderStyle = GoogleFonts.spaceMono(
+  static TextStyle sectionHeaderStyle = GoogleFonts.outfit(
     fontSize: 18,
-    fontWeight: FontWeight.bold,
-    letterSpacing: -0.5,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.3,
     color: textDark,
   );
 
@@ -88,14 +91,16 @@ class AppTheme {
 
       // Text theme
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.spaceMono(
+        displayLarge: GoogleFonts.outfit(
           fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
           color: textDark,
         ),
-        displayMedium: GoogleFonts.spaceMono(
+        displayMedium: GoogleFonts.outfit(
           fontSize: 28,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
           color: textDark,
         ),
         displaySmall: GoogleFonts.spaceMono(
@@ -130,6 +135,11 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         titleTextStyle: GoogleFonts.spaceMono(
           fontSize: 24,
           fontWeight: FontWeight.bold,

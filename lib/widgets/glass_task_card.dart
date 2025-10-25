@@ -141,7 +141,7 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: _isEditing ? null : _startEditing,
+                  onTap: widget.isCompleted ? null : (_isEditing ? null : _startEditing),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -150,24 +150,31 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
                   _buildCheckbox(),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _isEditing
+                    child: (_isEditing && !widget.isCompleted)
                         ? TextField(
                             controller: _editingController,
                             autofocus: true,
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: 'Edit task',
-                              hintStyle: AppTheme.taskTextStyle.copyWith(
-                                color: Colors.grey,
+                              hintStyle: GoogleFonts.outfit(
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: 0.3,
+                                color: Colors.grey.withOpacity(0.6),
                               ),
                             ),
-                            style: AppTheme.taskTextStyle.copyWith(
+                            style: GoogleFonts.outfit(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.3,
+                              height: 1.5,
                               decoration: widget.isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
                               color: widget.isCompleted
-                                  ? Colors.grey
-                                  : Colors.black87,
+                                  ? Colors.grey.withOpacity(0.65)
+                                  : const Color(0xFF1a1a1a),
                             ),
                             onSubmitted: (_) => _finishEditing(),
                             onEditingComplete: _finishEditing,
@@ -177,35 +184,80 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
                             children: [
                               Text(
                                 widget.todo.task,
-                                style: AppTheme.taskTextStyle.copyWith(
+                                style: GoogleFonts.outfit(
+                                  fontSize: 16.5,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.3,
+                                  height: 1.5,
                                   decoration: widget.isCompleted
                                       ? TextDecoration.lineThrough
                                       : null,
+                                  decorationColor: widget.isCompleted
+                                      ? Colors.grey.withOpacity(0.6)
+                                      : null,
+                                  decorationThickness: 2,
                                   color: widget.isCompleted
-                                      ? Colors.grey
-                                      : Colors.black87,
+                                      ? Colors.grey.withOpacity(0.65)
+                                      : const Color(0xFF1a1a1a),
+                                  shadows: widget.isCompleted
+                                      ? null
+                                      : [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(0.03),
+                                            offset: const Offset(0, 1),
+                                            blurRadius: 2,
+                                          ),
+                                        ],
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Icon(
-                                    widget.todo.priority.icon,
-                                    size: 14,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .primary
-                                        .withOpacity(0.8),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    widget.todo.priority.displayName,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withOpacity(0.8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.12),
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.08),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          widget.todo.priority.icon,
+                                          size: 13,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.85),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          widget.todo.priority.displayName,
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 0.4,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withOpacity(0.85),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -214,12 +266,13 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
                           ),
                   ),
                   const SizedBox(width: 8),
-                  // Star icon on the right
-                  Icon(
-                    Icons.star_outline,
-                    size: 20,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
-                  ),
+                  // Star icon on the right - hide for completed tasks
+                  if (!widget.isCompleted)
+                    Icon(
+                      Icons.star_outline,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                    ),
                 ],
               ),
             ),
@@ -379,22 +432,48 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
       BuildContext context, DismissDirection direction) {
     final isDeleteAction = direction == DismissDirection.endToStart;
     return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDeleteAction
+              ? [
+                  Colors.red.shade400,
+                  Colors.red.shade600,
+                ]
+              : [
+                  Colors.orange.shade400,
+                  Colors.orange.shade600,
+                ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: (isDeleteAction ? Colors.red : Colors.orange).withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       alignment: isDeleteAction ? Alignment.centerRight : Alignment.centerLeft,
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      color: isDeleteAction ? Colors.red : Colors.orange,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             isDeleteAction ? Icons.delete : Icons.archive,
             color: Colors.white,
+            size: 22,
           ),
           const SizedBox(width: 8),
           Text(
             isDeleteAction ? 'Delete' : 'Archive',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.outfit(
               color: Colors.white,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              letterSpacing: 0.3,
             ),
           ),
         ],

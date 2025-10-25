@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../Utils/responsive_layout.dart';
 import '../models/todo.dart';
 import '../models/todo_list.dart';
 
@@ -71,7 +72,7 @@ class _ArchivesScreenState extends State<ArchivesScreen> {
 
           return ListView.builder(
             itemCount: groupedTodos.length,
-            padding: const EdgeInsets.all(16),
+            padding: ResponsiveLayout.responsivePadding(context),
             itemBuilder: (context, index) {
               final dateKey = groupedTodos.keys.elementAt(index);
               final tasks = groupedTodos[dateKey]!;
@@ -88,8 +89,13 @@ class _ArchivesScreenState extends State<ArchivesScreen> {
                         children: [
                           Text(
                             DateFormat.yMMMMd().format(date),
-                            style: const TextStyle(
-                              fontSize: 18,
+                            style: TextStyle(
+                              fontSize: ResponsiveLayout.responsiveFontSize(
+                                context,
+                                mobile: 18,
+                                tablet: 20,
+                                desktop: 22,
+                              ),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -134,20 +140,42 @@ class _ArchivesScreenState extends State<ArchivesScreen> {
                           trailing: IconButton(
                             icon: const Icon(Icons.unarchive),
                             onPressed: () {
-                              context.read<TodoList>().unarchiveTodo(todo.id);
+                              // Capture references before showing snackbar
+                              final todoList = context.read<TodoList>();
+                              final todoId = todo.id;
+                              
+                              todoList.unarchiveTodo(todoId);
 
-                              // Show snackbar
+                              // Show centered snackbar
+                              final deviceType = ResponsiveLayout.getDeviceType(context);
+                              final isMobile = deviceType == DeviceType.mobile;
+                              
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text('Task unarchived'),
+                                  content: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.unarchive, color: Colors.white, size: 20),
+                                      const SizedBox(width: 12),
+                                      const Text(
+                                        'Task unarchived',
+                                        style: TextStyle(fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
                                   behavior: SnackBarBehavior.floating,
-                                  margin: const EdgeInsets.all(8),
+                                  width: isMobile ? null : 400,
+                                  margin: isMobile ? const EdgeInsets.all(8) : null,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  backgroundColor: Theme.of(context).colorScheme.primary,
                                   action: SnackBarAction(
                                     label: 'UNDO',
+                                    textColor: Colors.white,
                                     onPressed: () {
-                                      context
-                                          .read<TodoList>()
-                                          .archiveTodo(todo.id);
+                                      // Use captured reference instead of context.read
+                                      todoList.archiveTodo(todoId);
                                     },
                                   ),
                                 ),

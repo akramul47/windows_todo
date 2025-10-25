@@ -6,6 +6,52 @@ import 'package:windows_todo/models/todo.dart';
 
 class StorageService {
   static const String _todosKey = 'todos';
+  static const String _windowWidthKey = 'window_width';
+  static const String _windowHeightKey = 'window_height';
+  static const String _windowXKey = 'window_x';
+  static const String _windowYKey = 'window_y';
+  static const String _windowMaximizedKey = 'window_maximized';
+  static const String _windowAlwaysOnTopKey = 'window_always_on_top';
+
+  // Save window state
+  Future<void> saveWindowState({
+    required double width,
+    required double height,
+    required double x,
+    required double y,
+    required bool isMaximized,
+    required bool isAlwaysOnTop,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_windowWidthKey, width);
+    await prefs.setDouble(_windowHeightKey, height);
+    await prefs.setDouble(_windowXKey, x);
+    await prefs.setDouble(_windowYKey, y);
+    await prefs.setBool(_windowMaximizedKey, isMaximized);
+    await prefs.setBool(_windowAlwaysOnTopKey, isAlwaysOnTop);
+  }
+
+  // Load window state
+  Future<Map<String, dynamic>?> loadWindowState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final width = prefs.getDouble(_windowWidthKey);
+    final height = prefs.getDouble(_windowHeightKey);
+    final x = prefs.getDouble(_windowXKey);
+    final y = prefs.getDouble(_windowYKey);
+    final isMaximized = prefs.getBool(_windowMaximizedKey);
+    final isAlwaysOnTop = prefs.getBool(_windowAlwaysOnTopKey);
+
+    if (width == null || height == null) return null;
+
+    return {
+      'width': width,
+      'height': height,
+      'x': x,
+      'y': y,
+      'isMaximized': isMaximized ?? false,
+      'isAlwaysOnTop': isAlwaysOnTop ?? true,
+    };
+  }
 
   Future<void> saveTodos(List<Todo> todos) async {
     final prefs = await SharedPreferences.getInstance();
