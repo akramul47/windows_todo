@@ -215,45 +215,51 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
-                                              .withOpacity(0.12),
-                                          (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
-                                              .withOpacity(0.08),
-                                        ],
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
                                       ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          widget.todo.priority.icon,
-                                          size: 13,
-                                          color: (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
-                                              .withOpacity(0.85),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
+                                                .withOpacity(0.12),
+                                            (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
+                                                .withOpacity(0.08),
+                                          ],
                                         ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          widget.todo.priority.displayName,
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w600,
-                                            letterSpacing: 0.4,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            widget.todo.priority.icon,
+                                            size: 13,
+                                            color: (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
                                                 .withOpacity(0.85),
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 5),
+                                          Flexible(
+                                            child: Text(
+                                              widget.todo.priority.displayName,
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 0.4,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary
+                                                    .withOpacity(0.85),
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],

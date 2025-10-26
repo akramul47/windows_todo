@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:windows_todo/Utils/app_theme.dart';
 import 'package:windows_todo/providers/theme_provider.dart';
-import 'package:windows_todo/screens/home_screen.dart';
+import 'package:windows_todo/screens/main_navigation_screen.dart';
 import 'package:windows_todo/services/storage_service.dart';
 import 'package:windows_todo/services/windows_service.dart';
 
@@ -149,8 +149,8 @@ class MyApp extends StatelessWidget {
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.effectiveThemeMode,
             home: isWindows
-                ? const WindowFrame(child: HomeScreen())
-                : const HomeScreen(),
+                ? const WindowFrame(child: MainNavigationScreen())
+                : const MainNavigationScreen(),
           );
         },
       ),
