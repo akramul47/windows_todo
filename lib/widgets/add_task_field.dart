@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../Utils/app_theme.dart';
 
 class AddTaskField extends StatefulWidget {
   final TextEditingController controller;
@@ -84,6 +85,8 @@ class _AddTaskFieldState extends State<AddTaskField> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return MouseRegion(
       onEnter: (_) {
         if (mounted) setState(() => _isHovered = true);
@@ -99,48 +102,58 @@ class _AddTaskFieldState extends State<AddTaskField> {
           decoration: BoxDecoration(
             gradient: _isExpanded || _isHovered
                 ? LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.98),
-                      Colors.white.withOpacity(0.92),
-                    ],
+                    colors: isDark
+                        ? [
+                            Colors.white.withOpacity(0.08),
+                            Colors.white.withOpacity(0.05),
+                          ]
+                        : [
+                            Colors.white.withOpacity(0.98),
+                            Colors.white.withOpacity(0.92),
+                          ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
                 : LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.8),
-                      Colors.white.withOpacity(0.65),
-                    ],
+                    colors: isDark
+                        ? [
+                            Colors.white.withOpacity(0.05),
+                            Colors.white.withOpacity(0.02),
+                          ]
+                        : [
+                            Colors.white.withOpacity(0.8),
+                            Colors.white.withOpacity(0.65),
+                          ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
             borderRadius: BorderRadius.circular(_isExpanded ? 18 : 14),
             border: Border.all(
               color: _isExpanded
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                  ? (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary).withOpacity(0.5)
                   : _isHovered
-                      ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
-                      : Colors.white.withOpacity(0.4),
+                      ? (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary).withOpacity(0.3)
+                      : (isDark ? Colors.white : Colors.white).withOpacity(0.4),
               width: _isExpanded ? 2.5 : 1.5,
             ),
             boxShadow: [
               if (_isExpanded || _isHovered)
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                  color: (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary).withOpacity(0.15),
                   blurRadius: _isExpanded ? 20 : 12,
                   spreadRadius: _isExpanded ? 3 : 1,
                   offset: const Offset(0, 5),
                 ),
               if (_isExpanded)
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
                   blurRadius: 10,
                   spreadRadius: 0,
                   offset: const Offset(0, 3),
                 ),
               if (!_isExpanded && _isHovered)
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -157,13 +170,15 @@ class _AddTaskFieldState extends State<AddTaskField> {
   }
 
   Widget _buildCollapsedView() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Row(
       children: [
         Icon(
           Icons.add_task,
           color: _isHovered
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.primary.withOpacity(0.6),
+              ? (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
+              : (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary).withOpacity(0.6),
           size: 20,
         ),
         const SizedBox(width: 12),
@@ -173,8 +188,8 @@ class _AddTaskFieldState extends State<AddTaskField> {
             style: GoogleFonts.inter(
               fontSize: 14.5,
               color: _isHovered
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.9)
-                  : Colors.black.withOpacity(0.55),
+                  ? (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary).withOpacity(0.9)
+                  : (isDark ? AppTheme.textMediumDark : Colors.black).withOpacity(0.55),
               fontWeight: _isHovered ? FontWeight.w500 : FontWeight.w400,
               letterSpacing: 0.3,
             ),
@@ -183,7 +198,7 @@ class _AddTaskFieldState extends State<AddTaskField> {
         if (_isHovered)
           Icon(
             Icons.keyboard_arrow_right,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+            color: (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary).withOpacity(0.6),
             size: 18,
           ),
       ],
@@ -191,12 +206,14 @@ class _AddTaskFieldState extends State<AddTaskField> {
   }
 
   Widget _buildExpandedView() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(
           Icons.add_task,
-          color: Theme.of(context).colorScheme.primary,
+          color: isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary,
           size: 24,
         ),
         const SizedBox(width: 16),
@@ -216,7 +233,7 @@ class _AddTaskFieldState extends State<AddTaskField> {
               decoration: InputDecoration(
                 hintText: widget.hintText,
                 hintStyle: GoogleFonts.inter(
-                  color: Colors.black.withOpacity(0.4),
+                  color: (isDark ? AppTheme.textMediumDark : Colors.black).withOpacity(0.4),
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
                   letterSpacing: 0.3,
@@ -232,11 +249,11 @@ class _AddTaskFieldState extends State<AddTaskField> {
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
                 height: 1.5,
-                color: Colors.black87,
+                color: isDark ? AppTheme.textDarkMode : Colors.black87,
               ),
               onSubmitted: _handleSubmit,
               textInputAction: TextInputAction.done,
-              cursorColor: Theme.of(context).colorScheme.primary,
+              cursorColor: isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary,
               cursorWidth: 2.5,
               cursorHeight: 22,
               cursorRadius: const Radius.circular(2),

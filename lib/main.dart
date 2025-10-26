@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:windows_todo/Utils/app_theme.dart';
+import 'package:windows_todo/providers/theme_provider.dart';
 import 'package:windows_todo/screens/home_screen.dart';
 import 'package:windows_todo/services/storage_service.dart';
 import 'package:windows_todo/services/windows_service.dart';
@@ -18,23 +19,11 @@ bool get isDesktopPlatform => !kIsWeb && (Platform.isWindows || Platform.isMacOS
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Configure system UI overlay for mobile platforms (Android/iOS)
+  // Note: System UI overlay will be configured dynamically based on theme in MaterialApp
+  // This ensures proper status bar colors for both light and dark modes
+  
+  // Enable edge-to-edge mode for mobile
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        // Status bar (top)
-        statusBarColor: Colors.transparent, // Transparent for edge-to-edge
-        statusBarIconBrightness: Brightness.dark, // Dark icons for light background
-        statusBarBrightness: Brightness.light, // For iOS
-        
-        // Navigation bar (bottom) - Android only
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-        systemNavigationBarDividerColor: Colors.transparent,
-      ),
-    );
-    
-    // Enable edge-to-edge mode
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.edgeToEdge,
     );
@@ -126,15 +115,44 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TodoList()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         Provider(create: (_) => StorageService()),
       ],
-      child: MaterialApp(
-        title: 'Quest',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: isWindows
-            ? const WindowFrame(child: HomeScreen())
-            : const HomeScreen(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          // Get effective brightness
+          final brightness = themeProvider.effectiveThemeMode == ThemeMode.dark
+              ? Brightness.dark
+              : themeProvider.effectiveThemeMode == ThemeMode.light
+                  ? Brightness.light
+                  : MediaQuery.platformBrightnessOf(context);
+
+          // Update system UI overlay style for mobile based on theme
+          if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+            final isDark = brightness == Brightness.dark;
+            SystemChrome.setSystemUIOverlayStyle(
+              SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+                systemNavigationBarColor: isDark ? const Color(0xFF000000) : Colors.white,
+                systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                systemNavigationBarDividerColor: Colors.transparent,
+              ),
+            );
+          }
+
+          return MaterialApp(
+            title: 'Quest',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.effectiveThemeMode,
+            home: isWindows
+                ? const WindowFrame(child: HomeScreen())
+                : const HomeScreen(),
+          );
+        },
       ),
     );
   }
@@ -302,16 +320,20 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.background.withOpacity(0.95),
+          color: isDark
+              ? const Color(0xFF000000).withOpacity(0.98)
+              : Theme.of(context).colorScheme.background.withOpacity(0.95),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(isDark ? 0.5 : 0.1),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -339,7 +361,9 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
                       height: 40,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        color: isDark
+                            ? AppTheme.primaryColorDark.withOpacity(0.1)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.1),
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(12),
                           topRight: Radius.circular(12),
@@ -351,7 +375,9 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
                           Icon(
                             Icons.drag_indicator,
                             size: 20,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: isDark
+                                ? AppTheme.primaryColorDark
+                                : Theme.of(context).colorScheme.primary,
                           ),
                           const SizedBox(width: 8),
                           // "Drag to move" text - only shows when hovering over header
@@ -361,7 +387,9 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
                                 'Drag to move',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: isDark
+                                      ? AppTheme.primaryColorDark
+                                      : Theme.of(context).colorScheme.primary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -374,8 +402,12 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
                             _isAlwaysOnTop ? Icons.push_pin : Icons.push_pin_outlined,
                             size: 18,
                             color: _isAlwaysOnTop
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                                ? (isDark
+                                    ? AppTheme.primaryColorDark
+                                    : Theme.of(context).colorScheme.primary)
+                                : (isDark
+                                    ? AppTheme.primaryColorDark.withOpacity(0.6)
+                                    : Theme.of(context).colorScheme.primary.withOpacity(0.6)),
                           ),
                           onPressed: _toggleAlwaysOnTop,
                           padding: EdgeInsets.zero,
@@ -388,7 +420,9 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
                           icon: Icon(
                             Icons.remove,
                             size: 18,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: isDark
+                                ? AppTheme.primaryColorDark
+                                : Theme.of(context).colorScheme.primary,
                           ),
                           onPressed: () {
                             try {
@@ -407,7 +441,9 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
                           icon: Icon(
                             _isMaximized ? Icons.fullscreen_exit : Icons.fullscreen,
                             size: 18,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: isDark
+                                ? AppTheme.primaryColorDark
+                                : Theme.of(context).colorScheme.primary,
                           ),
                           onPressed: _toggleMaximize,
                           padding: EdgeInsets.zero,
@@ -420,7 +456,9 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
                           icon: Icon(
                             Icons.close,
                             size: 18,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: isDark
+                                ? AppTheme.primaryColorDark
+                                : Theme.of(context).colorScheme.primary,
                           ),
                           onPressed: () {
                             try {

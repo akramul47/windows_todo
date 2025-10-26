@@ -118,6 +118,8 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Dismissible(
       key: Key(widget.todo.id),
       background:
@@ -137,7 +139,7 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
             opacity: _cardFadeAnimation ?? const AlwaysStoppedAnimation(1.0),
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 4),
-              decoration: AppTheme.taskCardEffect,
+              decoration: isDark ? AppTheme.taskCardEffectDark : AppTheme.taskCardEffect,
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -161,7 +163,7 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
                                 fontSize: 16.5,
                                 fontWeight: FontWeight.w400,
                                 letterSpacing: 0.3,
-                                color: Colors.grey.withOpacity(0.6),
+                                color: (isDark ? Colors.grey.shade400 : Colors.grey).withOpacity(0.6),
                               ),
                             ),
                             style: GoogleFonts.outfit(
@@ -173,8 +175,8 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
                                   ? TextDecoration.lineThrough
                                   : null,
                               color: widget.isCompleted
-                                  ? Colors.grey.withOpacity(0.65)
-                                  : const Color(0xFF1a1a1a),
+                                  ? (isDark ? Colors.grey.shade500 : Colors.grey).withOpacity(0.65)
+                                  : (isDark ? AppTheme.textDarkMode : const Color(0xFF1a1a1a)),
                             ),
                             onSubmitted: (_) => _finishEditing(),
                             onEditingComplete: _finishEditing,
@@ -193,17 +195,17 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
                                       ? TextDecoration.lineThrough
                                       : null,
                                   decorationColor: widget.isCompleted
-                                      ? Colors.grey.withOpacity(0.6)
+                                      ? (isDark ? Colors.grey.shade500 : Colors.grey).withOpacity(0.6)
                                       : null,
                                   decorationThickness: 2,
                                   color: widget.isCompleted
-                                      ? Colors.grey.withOpacity(0.65)
-                                      : const Color(0xFF1a1a1a),
+                                      ? (isDark ? Colors.grey.shade500 : Colors.grey).withOpacity(0.65)
+                                      : (isDark ? AppTheme.textDarkMode : const Color(0xFF1a1a1a)),
                                   shadows: widget.isCompleted
                                       ? null
                                       : [
                                           Shadow(
-                                            color: Colors.black.withOpacity(0.03),
+                                            color: (isDark ? Colors.white : Colors.black).withOpacity(0.03),
                                             offset: const Offset(0, 1),
                                             blurRadius: 2,
                                           ),
@@ -221,13 +223,9 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .primary
+                                          (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
                                               .withOpacity(0.12),
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .primary
+                                          (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
                                               .withOpacity(0.08),
                                         ],
                                       ),
@@ -239,9 +237,7 @@ class _GlassTaskCardState extends State<GlassTaskCard> with TickerProviderStateM
                                         Icon(
                                           widget.todo.priority.icon,
                                           size: 13,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary
+                                          color: (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
                                               .withOpacity(0.85),
                                         ),
                                         const SizedBox(width: 5),

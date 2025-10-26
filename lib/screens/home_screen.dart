@@ -7,7 +7,9 @@ import '../models/todo.dart';
 import '../models/todo_list.dart';
 import '../services/storage_service.dart';
 import '../widgets/add_task_field.dart';
+import '../widgets/profile_avatar.dart';
 import 'archives_screen.dart';
+import 'settings_screen.dart';
 import '../widgets/glass_task_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -1018,6 +1020,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Tablet/Desktop layout - side by side
   Widget _buildTabletDesktopLayout(TodoList todoList) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     // Separate completed tasks by priority
     final completedMainQuest = todoList.completedTodos
         .where((todo) => todo.priority == TodoPriority.mainQuest)
@@ -1047,19 +1051,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.7),
-                          Colors.white.withOpacity(0.4),
-                        ],
+                        colors: isDark
+                            ? [
+                                Colors.white.withOpacity(0.05),
+                                Colors.white.withOpacity(0.02),
+                              ]
+                            : [
+                                Colors.white.withOpacity(0.7),
+                                Colors.white.withOpacity(0.4),
+                              ],
                       ),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.1)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.08),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                          color: isDark
+                              ? Colors.black.withOpacity(0.3)
+                              : Theme.of(context).colorScheme.primary.withOpacity(0.05),
                           blurRadius: 20,
                           offset: const Offset(0, 4),
                         ),
@@ -1076,7 +1089,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           decoration: BoxDecoration(
                             border: Border(
                               bottom: BorderSide(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.1)
+                                    : Theme.of(context).colorScheme.primary.withOpacity(0.1),
                                 width: 1.5,
                               ),
                             ),
@@ -1088,8 +1103,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [
-                                      Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                                      Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                                      (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
+                                          .withOpacity(0.15),
+                                      (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
+                                          .withOpacity(0.08),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(10),
@@ -1097,14 +1114,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Icon(
                                   TodoPriority.mainQuest.icon,
                                   size: 20,
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Text(
                                 'Main Quest',
                                 style: AppTheme.sectionHeaderStyle.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.5,
@@ -1163,19 +1180,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                        Theme.of(context).colorScheme.primary.withOpacity(0.25),
-                        Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                        Colors.transparent,
-                      ],
+                      colors: isDark
+                          ? [
+                              Colors.transparent,
+                              AppTheme.primaryColorDark.withOpacity(0.12),
+                              AppTheme.primaryColorDark.withOpacity(0.25),
+                              AppTheme.primaryColorDark.withOpacity(0.12),
+                              Colors.transparent,
+                            ]
+                          : [
+                              Colors.transparent,
+                              Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                              Theme.of(context).colorScheme.primary.withOpacity(0.25),
+                              Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                              Colors.transparent,
+                            ],
                       stops: const [0.0, 0.15, 0.5, 0.85, 1.0],
                     ),
                     borderRadius: BorderRadius.circular(2),
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                        color: isDark
+                            ? AppTheme.primaryColorDark.withOpacity(0.15)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.15),
                         blurRadius: 8,
                         spreadRadius: 1,
                       ),
@@ -1189,19 +1216,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.7),
-                          Colors.white.withOpacity(0.4),
-                        ],
+                        colors: isDark
+                            ? [
+                                Colors.white.withOpacity(0.05),
+                                Colors.white.withOpacity(0.02),
+                              ]
+                            : [
+                                Colors.white.withOpacity(0.7),
+                                Colors.white.withOpacity(0.4),
+                              ],
                       ),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.1)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.08),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                          color: isDark
+                              ? Colors.black.withOpacity(0.3)
+                              : Theme.of(context).colorScheme.primary.withOpacity(0.05),
                           blurRadius: 20,
                           offset: const Offset(0, 4),
                         ),
@@ -1218,7 +1254,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           decoration: BoxDecoration(
                             border: Border(
                               bottom: BorderSide(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.1)
+                                    : Theme.of(context).colorScheme.primary.withOpacity(0.1),
                                 width: 1.5,
                               ),
                             ),
@@ -1230,8 +1268,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [
-                                      Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                                      Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                                      (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
+                                          .withOpacity(0.15),
+                                      (isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary)
+                                          .withOpacity(0.08),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(10),
@@ -1239,14 +1279,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Icon(
                                   TodoPriority.sideQuest.icon,
                                   size: 20,
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Text(
                                 'Side Quest',
                                 style: AppTheme.sectionHeaderStyle.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: isDark ? AppTheme.primaryColorDark : Theme.of(context).colorScheme.primary,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.5,
@@ -1309,6 +1349,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Row(
       children: [
         Text(
@@ -1320,6 +1362,7 @@ class _HomeScreenState extends State<HomeScreen> {
               tablet: 32,
               desktop: 36,
             ),
+            color: isDark ? AppTheme.textDarkMode : AppTheme.textDark,
           ),
         ),
         const Spacer(),
@@ -1343,21 +1386,379 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
+        const SizedBox(width: 8),
+        // Profile Avatar with popup panel
+        Builder(
+          builder: (context) {
+            return ProfileAvatar(
+              onTap: () => _showProfilePanel(context),
+              size: ResponsiveLayout.responsiveValue<double>(
+                context,
+                mobile: 44,
+                tablet: 46,
+                desktop: 48,
+              ),
+            );
+          },
+        ),
       ],
+    );
+  }
+
+  void _showProfilePanel(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.2),
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Stack(
+          children: [
+            Positioned(
+              top: 60, // Position below the header
+              right: 20, // Align with right edge
+              child: Material(
+                color: Colors.transparent,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      alignment: Alignment.topRight,
+                      child: Opacity(
+                        opacity: value,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 300,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isDark
+                            ? [
+                                const Color(0xFF1A1A1A),
+                                const Color(0xFF0D0D0D),
+                              ]
+                            : [
+                                Colors.white,
+                                const Color(0xFFFAFAFA),
+                              ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.15)
+                            : Colors.black.withOpacity(0.08),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.7 : 0.2),
+                          blurRadius: 40,
+                          offset: const Offset(0, 15),
+                          spreadRadius: -5,
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFFFFD700).withOpacity(0.15),
+                          blurRadius: 25,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Profile section with avatar and tier
+                        Row(
+                          children: [
+                            // Avatar
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFFD700).withOpacity(0.4),
+                                    blurRadius: 12,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xFFFFD700).withOpacity(0.6),
+                                      const Color(0xFFFFE55C).withOpacity(0.5),
+                                      const Color(0xFFFFA500).withOpacity(0.6),
+                                    ],
+                                  ),
+                                ),
+                                child: Container(
+                                  margin: const EdgeInsets.all(1.5),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isDark ? const Color(0xFF000000) : Colors.white,
+                                  ),
+                                  child: Container(
+                                    margin: const EdgeInsets.all(1),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        colors: isDark
+                                            ? [
+                                                const Color(0xFF1A1A1A),
+                                                const Color(0xFF0D0D0D),
+                                              ]
+                                            : [
+                                                const Color(0xFFF8F8F8),
+                                                Colors.white,
+                                              ],
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: ShaderMask(
+                                        shaderCallback: (bounds) => LinearGradient(
+                                          colors: [
+                                            const Color(0xFFFFE55C).withOpacity(0.8),
+                                            const Color(0xFFFFD700).withOpacity(0.9),
+                                            const Color(0xFFFFA500).withOpacity(0.8),
+                                          ],
+                                        ).createShader(bounds),
+                                        child: const Icon(
+                                          Icons.person_rounded,
+                                          size: 26,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            // Tier info
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'User',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? AppTheme.textDarkMode : AppTheme.textDark,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFFFFD700),
+                                          Color(0xFFFFA500),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFFFFD700).withOpacity(0.4),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.diamond_rounded,
+                                          color: Colors.white,
+                                          size: 13,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          'Crystal Gold',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                            letterSpacing: 0.3,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        // Divider
+                        Container(
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        // Settings button
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: isDark
+                                            ? [
+                                                const Color(0xFF000000),
+                                                const Color(0xFF0A0A0A),
+                                              ]
+                                            : [
+                                                Colors.blue.shade50,
+                                                Colors.purple.shade50,
+                                              ],
+                                      ),
+                                    ),
+                                    child: const SettingsScreen(),
+                                  ),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: isDark
+                                      ? [
+                                          Colors.white.withOpacity(0.08),
+                                          Colors.white.withOpacity(0.04),
+                                        ]
+                                      : [
+                                          Colors.black.withOpacity(0.04),
+                                          Colors.black.withOpacity(0.02),
+                                        ],
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.1)
+                                      : Colors.black.withOpacity(0.06),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(9),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          (isDark ? AppTheme.primaryColorDark : AppTheme.primaryColor),
+                                          (isDark ? AppTheme.primaryColorDark : AppTheme.primaryColor)
+                                              .withOpacity(0.8),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: (isDark ? AppTheme.primaryColorDark : AppTheme.primaryColor)
+                                              .withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.settings_rounded,
+                                      color: isDark ? Colors.black : Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Text(
+                                      'Settings',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? AppTheme.textDarkMode : AppTheme.textDark,
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 15,
+                                    color: isDark ? AppTheme.textMediumDark : AppTheme.textMedium,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.blue.shade50,
-            Colors.purple.shade50,
-          ],
+          colors: isDark
+              ? [
+                  AppTheme.backgroundGradientStartDark,
+                  AppTheme.backgroundGradientEndDark,
+                ]
+              : [
+                  Colors.blue.shade50,
+                  Colors.purple.shade50,
+                ],
         ),
       ),
       child: Scaffold(
