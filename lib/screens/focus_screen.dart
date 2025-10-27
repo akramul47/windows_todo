@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../Utils/app_theme.dart';
@@ -9,6 +11,7 @@ import '../widgets/circular_timer_display.dart';
 import '../widgets/focus_settings_dialog.dart';
 import '../widgets/confetti_overlay.dart';
 import '../widgets/completion_celebration.dart';
+import '../widgets/window_controls_bar.dart';
 
 class FocusScreen extends StatefulWidget {
   const FocusScreen({Key? key}) : super(key: key);
@@ -23,6 +26,8 @@ class _FocusScreenState extends State<FocusScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final deviceType = ResponsiveLayout.getDeviceType(context);
     final isMobile = deviceType == DeviceType.mobile;
+    final isTabletOrDesktop = deviceType == DeviceType.tablet || deviceType == DeviceType.desktop;
+    final bool showWindowControls = !kIsWeb && Platform.isWindows && isTabletOrDesktop;
 
     return ChangeNotifierProvider(
       create: (_) => FocusProvider(),
@@ -44,56 +49,70 @@ class _FocusScreenState extends State<FocusScreen> {
         ),
         child: Stack(
           children: [
-            SafeArea(
-              child: Consumer<FocusProvider>(
-                builder: (context, focusProvider, child) {
-                  return Column(
-                    children: [
-                      // Header with settings
-                  _buildHeader(context, focusProvider, isDark, isMobile),
-                  
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 24 : 40,
-                        vertical: 20,
-                      ),
-                      child: Column(
-                        children: [
-                          SizedBox(height: isMobile ? 10 : 20),
-                          
-                          // Session type label
-                          _buildSessionLabel(focusProvider, isDark),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // Circular timer
-                          _buildTimerDisplay(context, focusProvider, isDark, isMobile),
-                          
-                          const SizedBox(height: 48),
-                          
-                          // Control buttons
-                          _buildControlButtons(context, focusProvider, isDark, isMobile),
-                          
-                          const SizedBox(height: 40),
-                          
-                          // Quick duration selector
-                          if (focusProvider.status == TimerStatus.idle)
-                            _buildDurationSelector(focusProvider, isDark, isMobile),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // Statistics
-                          _buildStatistics(focusProvider, isDark, isMobile),
-                        ],
-                      ),
+            Column(
+              children: [
+                // Window controls bar for Windows tablet/desktop
+                if (showWindowControls)
+            WindowControlsBar(
+              sidebarWidth: deviceType == DeviceType.desktop ? 220 : 72,
+              showDragIndicator: true,
+            ),
+                // Main content
+                Expanded(
+                  child: SafeArea(
+                    top: !showWindowControls, // No top safe area on Windows tablet/desktop
+                    child: Consumer<FocusProvider>(
+                      builder: (context, focusProvider, child) {
+                        return Column(
+                          children: [
+                            // Header with settings
+                            _buildHeader(context, focusProvider, isDark, isMobile),
+                            
+                            Expanded(
+                              child: SingleChildScrollView(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isMobile ? 24 : 40,
+                                  vertical: 20,
+                                ),
+                                child: Column(
+                                  children: [
+                                    SizedBox(height: isMobile ? 10 : 20),
+                                    
+                                    // Session type label
+                                    _buildSessionLabel(focusProvider, isDark),
+                                    
+                                    const SizedBox(height: 32),
+                                    
+                                    // Circular timer
+                                    _buildTimerDisplay(context, focusProvider, isDark, isMobile),
+                                    
+                                    const SizedBox(height: 48),
+                                    
+                                    // Control buttons
+                                    _buildControlButtons(context, focusProvider, isDark, isMobile),
+                                    
+                                    const SizedBox(height: 40),
+                                    
+                                    // Quick duration selector
+                                    if (focusProvider.status == TimerStatus.idle)
+                                      _buildDurationSelector(focusProvider, isDark, isMobile),
+                                    
+                                    const SizedBox(height: 32),
+                                    
+                                    // Statistics
+                                    _buildStatistics(focusProvider, isDark, isMobile),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
-                ],
-              );
-            },
-          ),
-        ),
+                ),
+              ],
+            ),
         
         // Celebration overlay
         Consumer<FocusProvider>(
@@ -198,7 +217,7 @@ class _FocusScreenState extends State<FocusScreen> {
       isRunning: provider.status == TimerStatus.running,
       primaryColor: color,
       backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      size: isMobile ? 280 : 320,
+      size: isMobile ? 250 : 280,
     );
   }
 

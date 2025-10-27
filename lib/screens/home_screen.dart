@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../Utils/app_theme.dart';
@@ -8,6 +10,7 @@ import '../models/todo_list.dart';
 import '../services/storage_service.dart';
 import '../widgets/add_task_field.dart';
 import '../widgets/profile_avatar.dart';
+import '../widgets/window_controls_bar.dart';
 import 'archives_screen.dart';
 import 'settings_screen.dart';
 import '../widgets/glass_task_card.dart';
@@ -1392,12 +1395,7 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context) {
             return ProfileAvatar(
               onTap: () => _showProfilePanel(context),
-              size: ResponsiveLayout.responsiveValue<double>(
-                context,
-                mobile: 44,
-                tablet: 46,
-                desktop: 48,
-              ),
+              size: 40, // Consistent size matching add habit button
             );
           },
         ),
@@ -1479,72 +1477,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Profile section with avatar and tier
                         Row(
                           children: [
-                            // Avatar
-                            Container(
-                              width: 52,
-                              height: 52,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFFFD700).withOpacity(0.4),
-                                    blurRadius: 12,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xFFFFD700).withOpacity(0.6),
-                                      const Color(0xFFFFE55C).withOpacity(0.5),
-                                      const Color(0xFFFFA500).withOpacity(0.6),
-                                    ],
-                                  ),
-                                ),
-                                child: Container(
-                                  margin: const EdgeInsets.all(1.5),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isDark ? const Color(0xFF000000) : Colors.white,
-                                  ),
-                                  child: Container(
-                                    margin: const EdgeInsets.all(1),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: LinearGradient(
-                                        colors: isDark
-                                            ? [
-                                                const Color(0xFF1A1A1A),
-                                                const Color(0xFF0D0D0D),
-                                              ]
-                                            : [
-                                                const Color(0xFFF8F8F8),
-                                                Colors.white,
-                                              ],
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: ShaderMask(
-                                        shaderCallback: (bounds) => LinearGradient(
-                                          colors: [
-                                            const Color(0xFFFFE55C).withOpacity(0.8),
-                                            const Color(0xFFFFD700).withOpacity(0.9),
-                                            const Color(0xFFFFA500).withOpacity(0.8),
-                                          ],
-                                        ).createShader(bounds),
-                                        child: const Icon(
-                                          Icons.person_rounded,
-                                          size: 26,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                            // Avatar - using ProfileAvatar widget for consistency
+                            const ProfileAvatar(
+                              size: 52,
                             ),
                             const SizedBox(width: 14),
                             // Tier info
@@ -1744,6 +1679,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final deviceType = ResponsiveLayout.getDeviceType(context);
+    final bool isTabletOrDesktop = deviceType == DeviceType.tablet || deviceType == DeviceType.desktop;
+    final bool showWindowControls = !kIsWeb && Platform.isWindows && isTabletOrDesktop;
+    // Sidebar width: 220 for desktop, 72 for tablet
+    final double sidebarWidth = deviceType == DeviceType.desktop ? 220 : 72;
     
     return Container(
       decoration: BoxDecoration(
@@ -1764,19 +1704,28 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         key: _scaffoldKey,
         backgroundColor: Colors.transparent,
-        body: SafeArea(
-          top: true, // Respect status bar
-          bottom: true, // Respect navigation bar
-          left: false,
-          right: false,
-          child: Consumer<TodoList>(
-            builder: (context, todoList, child) {
-              // Use responsive layout based on screen size
-              return ResponsiveLayout.isTabletOrDesktop(context)
-                  ? _buildTabletDesktopLayout(todoList)
-                  : _buildMobileLayout(todoList);
-            },
-          ),
+        body: Column(
+          children: [
+            // Window controls bar for Windows tablet/desktop
+            if (showWindowControls) WindowControlsBar(sidebarWidth: sidebarWidth, showDragIndicator: true),
+            // Main content
+            Expanded(
+              child: SafeArea(
+                top: !showWindowControls, // No top safe area on Windows tablet/desktop (controls handle it)
+                bottom: true,
+                left: false,
+                right: false,
+                child: Consumer<TodoList>(
+                  builder: (context, todoList, child) {
+                    // Use responsive layout based on screen size
+                    return ResponsiveLayout.isTabletOrDesktop(context)
+                        ? _buildTabletDesktopLayout(todoList)
+                        : _buildMobileLayout(todoList);
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -26,9 +26,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<NavigationItem> _navItems = const [
     NavigationItem(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-      label: 'Home',
+      icon: Icons.check_circle_outline_rounded,
+      activeIcon: Icons.check_circle,
+      label: 'TO-DO',
     ),
     NavigationItem(
       icon: Icons.track_changes,
@@ -155,15 +155,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   Widget _buildTabletDesktopLayout() {
     return Scaffold(
-      body: Row(
+      body: Column(
         children: [
-          // Side Navigation Rail
-          _buildSideNavigation(),
-          // Main Content
+          // This is where screen-specific headers will go
+          // Each screen will provide its own header
           Expanded(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: _screens,
+            child: Row(
+              children: [
+                // Side Navigation Rail
+                _buildSideNavigation(),
+                // Main Content
+                Expanded(
+                  child: IndexedStack(
+                    index: _currentIndex,
+                    children: _screens,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

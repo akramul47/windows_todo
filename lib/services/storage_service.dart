@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:windows_todo/models/todo.dart';
 import 'package:windows_todo/models/timer_state.dart';
+import 'package:windows_todo/models/habit.dart';
 
 class StorageService {
   static const String _todosKey = 'todos';
@@ -161,5 +162,25 @@ class StorageService {
       'sessions': prefs.getInt(_focusSessionsKey) ?? 0,
       'totalTime': prefs.getInt(_focusTotalTimeKey) ?? 0,
     };
+  }
+
+  // Habits Storage
+  static const String _habitsKey = 'habits';
+
+  Future<void> saveHabits(List<Habit> habits) async {
+    final prefs = await SharedPreferences.getInstance();
+    final String habitsJson = json.encode(
+      habits.map((habit) => habit.toJson()).toList(),
+    );
+    await prefs.setString(_habitsKey, habitsJson);
+  }
+
+  Future<List<Habit>> loadHabits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? habitsJson = prefs.getString(_habitsKey);
+    if (habitsJson == null) return [];
+
+    final List<dynamic> habitsList = json.decode(habitsJson);
+    return habitsList.map((json) => Habit.fromJson(json)).toList();
   }
 }

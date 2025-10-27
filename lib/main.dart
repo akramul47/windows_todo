@@ -11,6 +11,7 @@ import 'package:windows_todo/services/storage_service.dart';
 import 'package:windows_todo/services/windows_service.dart';
 
 import 'models/todo_list.dart';
+import 'providers/habit_provider.dart';
 
 // Platform detection helpers
 bool get isWindows => !kIsWeb && Platform.isWindows;
@@ -115,6 +116,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TodoList()),
+        ChangeNotifierProvider(create: (_) => HabitList()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         Provider(create: (_) => StorageService()),
       ],
@@ -168,12 +170,10 @@ class WindowFrame extends StatefulWidget {
 }
 
 class _WindowFrameState extends State<WindowFrame> with WindowListener {
-  bool _isHovered = false;
+  bool _isHovered = false; // Track if window frame is hovered
   bool _isHeaderHovered = false; // Track if header is hovered
   bool _isAlwaysOnTop = true; // Track always-on-top state
   bool _isMaximized = false; // Track maximized state
-  Size? _previousSize; // Store previous size for restore
-  Offset? _previousPosition; // Store previous position for restore
 
   @override
   void initState() {
@@ -232,27 +232,11 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
   Future<void> _toggleMaximize() async {
     try {
       if (_isMaximized) {
-        // Restore to previous size and position
-        if (_previousSize != null && _previousPosition != null) {
-          await windowManager.unmaximize();
-          // Small delay to ensure unmaximize completes
-          await Future.delayed(const Duration(milliseconds: 50));
-          await windowManager.setSize(_previousSize!);
-          await windowManager.setPosition(_previousPosition!);
-          setState(() {
-            _isMaximized = false;
-          });
-        } else {
-          // Fallback if no previous state
-          await windowManager.unmaximize();
-          setState(() {
-            _isMaximized = false;
-          });
-        }
+        await windowManager.unmaximize();
+        setState(() {
+          _isMaximized = false;
+        });
       } else {
-        // Save current size and position before maximizing
-        _previousSize = await windowManager.getSize();
-        _previousPosition = await windowManager.getPosition();
         await windowManager.maximize();
         setState(() {
           _isMaximized = true;
@@ -267,31 +251,13 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
   @override
   void onWindowResize() {
     super.onWindowResize();
-    // Save current size as previous size when not maximized
-    if (!_isMaximized) {
-      _updatePreviousState();
-    }
     _saveWindowState();
   }
 
   @override
   void onWindowMove() {
     super.onWindowMove();
-    // Save current position as previous position when not maximized
-    if (!_isMaximized) {
-      _updatePreviousState();
-    }
     _saveWindowState();
-  }
-
-  // Update previous state with current window state
-  Future<void> _updatePreviousState() async {
-    try {
-      _previousSize = await windowManager.getSize();
-      _previousPosition = await windowManager.getPosition();
-    } catch (e) {
-      debugPrint('Failed to update previous state: $e');
-    }
   }
 
   @override
@@ -339,146 +305,153 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
             ),
           ],
         ),
-        child: Column(
-          children: [
-            // Only show draggable header on Windows - hidden until hovered
-            if (isWindows)
-              AnimatedOpacity(
-                opacity: _isHovered ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: MouseRegion(
-                  onEnter: (_) => setState(() => _isHeaderHovered = true),
-                  onExit: (_) => setState(() => _isHeaderHovered = false),
-                  child: GestureDetector(
-                    onPanStart: (details) {
-                      try {
-                        windowManager.startDragging();
-                      } catch (e) {
-                        debugPrint('Failed to start dragging: $e');
-                      }
-                    },
-                    child: Container(
-                      height: 40,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppTheme.primaryColorDark.withOpacity(0.1)
-                            : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          // Drag indicator
-                          Icon(
-                            Icons.drag_indicator,
-                            size: 20,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Check if mobile view (width < 600px) - tablet/desktop get window controls in screens
+            final isMobileView = constraints.maxWidth < 600;
+            
+            return Column(
+              children: [
+                // Show hover header only for mobile view on Windows
+                if (isMobileView)
+                  AnimatedOpacity(
+                    opacity: _isHovered ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: MouseRegion(
+                      onEnter: (_) => setState(() => _isHeaderHovered = true),
+                      onExit: (_) => setState(() => _isHeaderHovered = false),
+                      child: GestureDetector(
+                        onPanStart: (details) {
+                          try {
+                            windowManager.startDragging();
+                          } catch (e) {
+                            debugPrint('Failed to start dragging: $e');
+                          }
+                        },
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
                             color: isDark
-                                ? AppTheme.primaryColorDark
-                                : Theme.of(context).colorScheme.primary,
+                                ? AppTheme.primaryColorDark.withOpacity(0.1)
+                                : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              topRight: Radius.circular(12),
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          // "Drag to move" text - only shows when hovering over header
-                          if (_isHeaderHovered)
-                            Expanded(
-                              child: Text(
-                                'Drag to move',
-                                style: TextStyle(
-                                  fontSize: 12,
+                          child: Row(
+                            children: [
+                              // Drag indicator
+                              Icon(
+                                Icons.drag_indicator,
+                                size: 20,
+                                color: isDark
+                                    ? AppTheme.primaryColorDark
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              // "Drag to move" text - only shows when hovering over header
+                              if (_isHeaderHovered)
+                                Expanded(
+                                  child: Text(
+                                    'Drag to move',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppTheme.primaryColorDark
+                                          : Theme.of(context).colorScheme.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              if (!_isHeaderHovered)
+                                const Spacer(),
+                              // Always on top toggle button
+                              IconButton(
+                                icon: Icon(
+                                  _isAlwaysOnTop ? Icons.push_pin : Icons.push_pin_outlined,
+                                  size: 18,
+                                  color: _isAlwaysOnTop
+                                      ? (isDark
+                                          ? AppTheme.primaryColorDark
+                                          : Theme.of(context).colorScheme.primary)
+                                      : (isDark
+                                          ? AppTheme.primaryColorDark.withOpacity(0.6)
+                                          : Theme.of(context).colorScheme.primary.withOpacity(0.6)),
+                                ),
+                                onPressed: _toggleAlwaysOnTop,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: _isAlwaysOnTop ? 'Unpin window' : 'Pin window on top',
+                              ),
+                              const SizedBox(width: 8),
+                              // Minimize button
+                              IconButton(
+                                icon: Icon(
+                                  Icons.remove,
+                                  size: 18,
                                   color: isDark
                                       ? AppTheme.primaryColorDark
                                       : Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.w500,
                                 ),
+                                onPressed: () {
+                                  try {
+                                    windowManager.minimize();
+                                  } catch (e) {
+                                    debugPrint('Failed to minimize: $e');
+                                  }
+                                },
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Minimize',
                               ),
-                            ),
-                          if (!_isHeaderHovered)
-                            const Spacer(),
-                          // Always on top toggle button
-                          IconButton(
-                          icon: Icon(
-                            _isAlwaysOnTop ? Icons.push_pin : Icons.push_pin_outlined,
-                            size: 18,
-                            color: _isAlwaysOnTop
-                                ? (isDark
-                                    ? AppTheme.primaryColorDark
-                                    : Theme.of(context).colorScheme.primary)
-                                : (isDark
-                                    ? AppTheme.primaryColorDark.withOpacity(0.6)
-                                    : Theme.of(context).colorScheme.primary.withOpacity(0.6)),
+                              const SizedBox(width: 8),
+                              // Maximize/Restore button
+                              IconButton(
+                                icon: Icon(
+                                  _isMaximized ? Icons.fullscreen_exit : Icons.fullscreen,
+                                  size: 18,
+                                  color: isDark
+                                      ? AppTheme.primaryColorDark
+                                      : Theme.of(context).colorScheme.primary,
+                                ),
+                                onPressed: _toggleMaximize,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: _isMaximized ? 'Restore' : 'Maximize',
+                              ),
+                              const SizedBox(width: 8),
+                              // Close button
+                              IconButton(
+                                icon: Icon(
+                                  Icons.close,
+                                  size: 18,
+                                  color: isDark
+                                      ? AppTheme.primaryColorDark
+                                      : Theme.of(context).colorScheme.primary,
+                                ),
+                                onPressed: () {
+                                  try {
+                                    windowManager.hide();
+                                  } catch (e) {
+                                    debugPrint('Failed to hide: $e');
+                                  }
+                                },
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Close',
+                              ),
+                            ],
                           ),
-                          onPressed: _toggleAlwaysOnTop,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          tooltip: _isAlwaysOnTop ? 'Unpin window' : 'Pin window on top',
                         ),
-                        const SizedBox(width: 8),
-                        // Minimize button
-                        IconButton(
-                          icon: Icon(
-                            Icons.remove,
-                            size: 18,
-                            color: isDark
-                                ? AppTheme.primaryColorDark
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                          onPressed: () {
-                            try {
-                              windowManager.minimize();
-                            } catch (e) {
-                              debugPrint('Failed to minimize: $e');
-                            }
-                          },
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          tooltip: 'Minimize',
-                        ),
-                        const SizedBox(width: 8),
-                        // Maximize/Restore button
-                        IconButton(
-                          icon: Icon(
-                            _isMaximized ? Icons.fullscreen_exit : Icons.fullscreen,
-                            size: 18,
-                            color: isDark
-                                ? AppTheme.primaryColorDark
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                          onPressed: _toggleMaximize,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          tooltip: _isMaximized ? 'Restore' : 'Maximize',
-                        ),
-                        const SizedBox(width: 8),
-                        // Close button
-                        IconButton(
-                          icon: Icon(
-                            Icons.close,
-                            size: 18,
-                            color: isDark
-                                ? AppTheme.primaryColorDark
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                          onPressed: () {
-                            try {
-                              windowManager.hide();
-                            } catch (e) {
-                              debugPrint('Failed to hide: $e');
-                            }
-                          },
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          tooltip: 'Close',
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-            Expanded(child: widget.child),
-          ],
+                Expanded(child: widget.child),
+              ],
+            );
+          },
         ),
       ),
     );
