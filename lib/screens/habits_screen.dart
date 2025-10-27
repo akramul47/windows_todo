@@ -128,77 +128,79 @@ class _HabitsScreenState extends State<HabitsScreen> {
           ),
         ),
         // Content with headers
-        Column(
-          children: [
-            // Window controls bar for tablet/desktop Windows
-            if ((isTablet || isDesktop) && !kIsWeb && Platform.isWindows)
-              WindowControlsBar(sidebarWidth: sidebarWidth, showDragIndicator: true),
-            
-            // Header with title, archive toggle, and add button (full width)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppTheme.glassBackgroundDark.withOpacity(0.3)
-                    : AppTheme.glassBackground.withOpacity(0.3),
-                border: Border(
-                  bottom: BorderSide(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.05)
-                        : Colors.black.withOpacity(0.05),
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    _showArchived ? 'Archived Habits' : 'My Habits',
-                    style: GoogleFonts.outfit(
-                      fontSize: isMobile ? 22 : 26,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppTheme.textDarkMode : AppTheme.textDark,
-                    ),
-                  ),
-                  const Spacer(),
-                  // Archive toggle button
-                  IconButton(
-                    icon: Icon(
-                      _showArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
-                      color: isDark ? AppTheme.textDarkMode : AppTheme.textDark,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showArchived = !_showArchived;
-                      });
-                    },
-                    tooltip: _showArchived ? 'Show Active' : 'Show Archived',
-                    style: IconButton.styleFrom(
-                      backgroundColor: isDark
+        SafeArea(
+          // Only apply SafeArea on mobile, not on desktop/tablet with window controls
+          top: isMobile,
+          bottom: false,
+          child: Column(
+            children: [
+              // Window controls bar for tablet/desktop Windows
+              if ((isTablet || isDesktop) && !kIsWeb && Platform.isWindows)
+                WindowControlsBar(sidebarWidth: sidebarWidth, showDragIndicator: true),
+              
+              // Header with title, archive toggle, and add button (full width)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppTheme.glassBackgroundDark.withOpacity(0.3)
+                      : AppTheme.glassBackground.withOpacity(0.3),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isDark
                           ? Colors.white.withOpacity(0.05)
                           : Colors.black.withOpacity(0.05),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Add habit button
-                  if (!_showArchived)
-                    IconButton(
-                      icon: const Icon(Icons.add_rounded),
-                      onPressed: _showAddHabitDialog,
-                      tooltip: 'Add Habit',
-                      style: IconButton.styleFrom(
-                        backgroundColor: isDark
-                            ? AppTheme.primaryColorDark
-                            : AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      _showArchived ? 'Archived Habits' : 'My Habits',
+                      style: GoogleFonts.outfit(
+                        fontSize: isMobile ? 22 : 26,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppTheme.textDarkMode : AppTheme.textDark,
                       ),
                     ),
-                ],
+                    const Spacer(),
+                    // Archive toggle button
+                    IconButton(
+                      icon: Icon(
+                        _showArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
+                        color: isDark ? AppTheme.textDarkMode : AppTheme.textDark,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _showArchived = !_showArchived;
+                        });
+                      },
+                      tooltip: _showArchived ? 'Show Active' : 'Show Archived',
+                      style: IconButton.styleFrom(
+                        backgroundColor: isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.black.withOpacity(0.05),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Add habit button
+                    if (!_showArchived)
+                      IconButton(
+                        icon: const Icon(Icons.add_rounded),
+                        onPressed: _showAddHabitDialog,
+                        tooltip: 'Add Habit',
+                        style: IconButton.styleFrom(
+                          backgroundColor: isDark
+                              ? AppTheme.primaryColorDark
+                              : AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            
-            Expanded(
-              child: SafeArea(
-                top: false, // No top safe area - headers handle spacing
+              
+              Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : Column(
@@ -284,9 +286,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 ],
               ),
             ),
+          ],
           ),
-        ],
-      ),
+        ),
       ],
     );
   }

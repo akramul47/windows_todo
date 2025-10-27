@@ -230,7 +230,7 @@ class Habit {
       color: Color(json['color']),
       icon: IconData(
         json['icon'],
-        fontFamily: json['iconFontFamily'],
+        fontFamily: json['iconFontFamily'] ?? 'MaterialIcons',
         fontPackage: json['iconFontPackage'],
       ),
       type: HabitType.values[json['type'] ?? 0],
