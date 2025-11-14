@@ -217,15 +217,50 @@ class _AnimatedTimerTextState extends State<AnimatedTimerText>
 
   Widget _buildCountUpDisplay(String timeText) {
     // Simple static display during count-up - no sliding animation
-    return Text(
-      timeText,
-      style: GoogleFonts.outfit(
-        fontSize: widget.fontSize,
-        fontWeight: FontWeight.w200,
-        letterSpacing: 0,
-        color: widget.color,
-        height: 1,
-      ),
+    // Match exact structure of countdown display for pixel-perfect alignment
+    final characters = timeText.split('');
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: List.generate(characters.length, (index) {
+        final char = characters[index];
+        final isColon = char == ':';
+
+        if (isColon) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: widget.fontSize * 0.1),
+            child: Text(
+              ':',
+              style: GoogleFonts.outfit(
+                fontSize: widget.fontSize,
+                fontWeight: FontWeight.w200,
+                letterSpacing: 0,
+                color: widget.color,
+                height: 1.0,
+              ),
+            ),
+          );
+        }
+
+        return SizedBox(
+          width: widget.fontSize * 0.6,
+          height: widget.fontSize * 1.2,
+          child: Center(
+            child: Text(
+              char,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(
+                fontSize: widget.fontSize,
+                fontWeight: FontWeight.w200,
+                letterSpacing: 0,
+                color: widget.color,
+                height: 1.0,
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 
@@ -345,7 +380,7 @@ class _AnimatedDigitState extends State<_AnimatedDigit>
             fontWeight: FontWeight.w200,
             letterSpacing: 0,
             color: widget.color,
-            height: 1,
+            height: 1.0,
           ),
         ),
       );
@@ -363,25 +398,27 @@ class _AnimatedDigitState extends State<_AnimatedDigit>
             if (widget.isCountdown) {
               // COUNTDOWN ANIMATION (reverse): Previous falls down, new comes from above
               return Stack(
-                alignment: Alignment.center,
+                clipBehavior: Clip.hardEdge,
                 children: [
                   // Previous digit falling down and fading out
                   if (showAnimation && _displayingPrevious != null)
                     Positioned(
                       left: 0,
                       right: 0,
-                      top: widget.fontSize * 1.2 * _slideAnimation.value,
+                      top: (widget.fontSize * 1.2 * _slideAnimation.value) + (widget.fontSize * 0.1),
                       child: Opacity(
                         opacity: 1.0 - _slideAnimation.value,
-                        child: Text(
-                          _displayingPrevious!,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
-                            fontSize: widget.fontSize,
-                            fontWeight: FontWeight.w200,
-                            letterSpacing: 0,
-                            color: widget.color,
-                            height: 1,
+                        child: Center(
+                          child: Text(
+                            _displayingPrevious!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.outfit(
+                              fontSize: widget.fontSize,
+                              fontWeight: FontWeight.w200,
+                              letterSpacing: 0,
+                              color: widget.color,
+                              height: 1.0,
+                            ),
                           ),
                         ),
                       ),
@@ -392,21 +429,23 @@ class _AnimatedDigitState extends State<_AnimatedDigit>
                     left: 0,
                     right: 0,
                     top: showAnimation
-                        ? -widget.fontSize * 1.2 * (1.0 - _slideAnimation.value)
-                        : 0,
+                        ? (-widget.fontSize * 1.2 * (1.0 - _slideAnimation.value)) + (widget.fontSize * 0.1)
+                        : widget.fontSize * 0.1,
                     child: Opacity(
                       opacity: showAnimation 
                           ? _slideAnimation.value 
                           : 1.0,
-                      child: Text(
-                        _displayingCurrent ?? widget.currentChar,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(
-                          fontSize: widget.fontSize,
-                          fontWeight: FontWeight.w200,
-                          letterSpacing: 0,
-                          color: widget.color,
-                          height: 1,
+                      child: Center(
+                        child: Text(
+                          _displayingCurrent ?? widget.currentChar,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.outfit(
+                            fontSize: widget.fontSize,
+                            fontWeight: FontWeight.w200,
+                            letterSpacing: 0,
+                            color: widget.color,
+                            height: 1.0,
+                          ),
                         ),
                       ),
                     ),
@@ -416,25 +455,27 @@ class _AnimatedDigitState extends State<_AnimatedDigit>
             } else {
               // COUNT-UP ANIMATION: Previous goes up, new comes from bottom
               return Stack(
-                alignment: Alignment.center,
+                clipBehavior: Clip.hardEdge,
                 children: [
                   // Previous digit sliding up and fading out
                   if (showAnimation && _displayingPrevious != null)
                     Positioned(
                       left: 0,
                       right: 0,
-                      top: -widget.fontSize * 1.2 * _slideAnimation.value,
+                      top: (-widget.fontSize * 1.2 * _slideAnimation.value) + (widget.fontSize * 0.1),
                       child: Opacity(
                         opacity: 1.0 - _slideAnimation.value,
-                        child: Text(
-                          _displayingPrevious!,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
-                            fontSize: widget.fontSize,
-                            fontWeight: FontWeight.w200,
-                            letterSpacing: 0,
-                            color: widget.color,
-                            height: 1,
+                        child: Center(
+                          child: Text(
+                            _displayingPrevious!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.outfit(
+                              fontSize: widget.fontSize,
+                              fontWeight: FontWeight.w200,
+                              letterSpacing: 0,
+                              color: widget.color,
+                              height: 1.0,
+                            ),
                           ),
                         ),
                       ),
@@ -445,21 +486,23 @@ class _AnimatedDigitState extends State<_AnimatedDigit>
                     left: 0,
                     right: 0,
                     top: showAnimation
-                        ? widget.fontSize * 1.2 * (1.0 - _slideAnimation.value)
-                        : 0,
+                        ? (widget.fontSize * 1.2 * (1.0 - _slideAnimation.value)) + (widget.fontSize * 0.1)
+                        : widget.fontSize * 0.1,
                     child: Opacity(
                       opacity: showAnimation 
                           ? _slideAnimation.value 
                           : 1.0,
-                      child: Text(
-                        _displayingCurrent ?? widget.currentChar,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(
-                          fontSize: widget.fontSize,
-                          fontWeight: FontWeight.w200,
-                          letterSpacing: 0,
-                          color: widget.color,
-                          height: 1,
+                      child: Center(
+                        child: Text(
+                          _displayingCurrent ?? widget.currentChar,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.outfit(
+                            fontSize: widget.fontSize,
+                            fontWeight: FontWeight.w200,
+                            letterSpacing: 0,
+                            color: widget.color,
+                            height: 1.0,
+                          ),
                         ),
                       ),
                     ),
