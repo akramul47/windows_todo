@@ -57,7 +57,7 @@ class _CircularTimerDisplayState extends State<CircularTimerDisplay>
     // Expand animation - smooth fill from start to current progress
     _expandController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2500),
+      duration: const Duration(milliseconds: 2000),
       value: 1.0, // Start fully visible when idle
     );
     

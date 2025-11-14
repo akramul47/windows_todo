@@ -59,7 +59,7 @@ class _AnimatedTimerTextState extends State<AnimatedTimerText>
     );
     
     _secondController = AnimationController(
-      duration: const Duration(milliseconds: 3500), // Match wave animation exactly
+      duration: const Duration(milliseconds: 3000), // Match wave animation exactly
       vsync: this,
     );
     
@@ -246,18 +246,27 @@ class _AnimatedTimerTextState extends State<AnimatedTimerText>
         return SizedBox(
           width: widget.fontSize * 0.6,
           height: widget.fontSize * 1.2,
-          child: Center(
-            child: Text(
-              char,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
-                fontSize: widget.fontSize,
-                fontWeight: FontWeight.w200,
-                letterSpacing: 0,
-                color: widget.color,
-                height: 1.0,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                right: 0,
+                top: widget.fontSize * 0.1, // Match countdown offset
+                child: Center(
+                  child: Text(
+                    char,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                      fontSize: widget.fontSize,
+                      fontWeight: FontWeight.w200,
+                      letterSpacing: 0,
+                      color: widget.color,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         );
       }),
