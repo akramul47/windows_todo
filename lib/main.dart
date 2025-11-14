@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:windows_todo/Utils/app_theme.dart';
 import 'package:windows_todo/providers/theme_provider.dart';
 import 'package:windows_todo/screens/main_navigation_screen.dart';
@@ -12,10 +13,61 @@ import 'package:windows_todo/services/windows_service.dart';
 
 import 'models/todo_list.dart';
 import 'providers/habit_provider.dart';
+import 'providers/focus_provider.dart';
 
 // Platform detection helpers
 bool get isWindows => !kIsWeb && Platform.isWindows;
 bool get isDesktopPlatform => !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+
+// Helper function to ensure window position is within screen bounds
+Future<Offset> _getSafeWindowPosition(Offset position, Size windowSize) async {
+  try {
+    final primaryDisplay = await screenRetriever.getPrimaryDisplay();
+    final screenSize = primaryDisplay.size;
+    final screenPosition = primaryDisplay.visiblePosition ?? const Offset(0, 0);
+    
+    // Calculate safe bounds (ensure at least 100px of window is visible)
+    const minVisibleSize = 100.0;
+    
+    double safeX = position.dx;
+    double safeY = position.dy;
+    
+    // Check right edge
+    if (safeX + minVisibleSize > screenPosition.dx + screenSize.width) {
+      safeX = screenPosition.dx + screenSize.width - minVisibleSize;
+    }
+    
+    // Check left edge
+    if (safeX + windowSize.width < screenPosition.dx + minVisibleSize) {
+      safeX = screenPosition.dx;
+    }
+    
+    // Check bottom edge
+    if (safeY + minVisibleSize > screenPosition.dy + screenSize.height) {
+      safeY = screenPosition.dy + screenSize.height - minVisibleSize;
+    }
+    
+    // Check top edge
+    if (safeY < screenPosition.dy) {
+      safeY = screenPosition.dy;
+    }
+    
+    // If position is completely out of bounds, center the window
+    if (safeX < screenPosition.dx - windowSize.width + minVisibleSize ||
+        safeX > screenPosition.dx + screenSize.width - minVisibleSize ||
+        safeY < screenPosition.dy - 50 ||
+        safeY > screenPosition.dy + screenSize.height - minVisibleSize) {
+      safeX = screenPosition.dx + (screenSize.width - windowSize.width) / 2;
+      safeY = screenPosition.dy + (screenSize.height - windowSize.height) / 2;
+    }
+    
+    return Offset(safeX, safeY);
+  } catch (e) {
+    debugPrint('Failed to get safe window position: $e');
+    // Fallback to original position if screen retrieval fails
+    return position;
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,15 +99,19 @@ void main() async {
         if (isWindows) {
           // Restore saved state or use defaults for Windows
           if (windowState != null) {
-            await windowManager.setSize(Size(
+            final windowSize = Size(
               windowState['width'] as double,
               windowState['height'] as double,
-            ));
+            );
+            await windowManager.setSize(windowSize);
+            
             if (windowState['x'] != null && windowState['y'] != null) {
-              await windowManager.setPosition(Offset(
+              final savedPosition = Offset(
                 windowState['x'] as double,
                 windowState['y'] as double,
-              ));
+              );
+              final safePosition = await _getSafeWindowPosition(savedPosition, windowSize);
+              await windowManager.setPosition(safePosition);
             }
             await windowManager.setAlwaysOnTop(windowState['isAlwaysOnTop'] as bool);
             if (windowState['isMaximized'] as bool) {
@@ -72,15 +128,19 @@ void main() async {
         } else {
           // macOS/Linux
           if (windowState != null) {
-            await windowManager.setSize(Size(
+            final windowSize = Size(
               windowState['width'] as double,
               windowState['height'] as double,
-            ));
+            );
+            await windowManager.setSize(windowSize);
+            
             if (windowState['x'] != null && windowState['y'] != null) {
-              await windowManager.setPosition(Offset(
+              final savedPosition = Offset(
                 windowState['x'] as double,
                 windowState['y'] as double,
-              ));
+              );
+              final safePosition = await _getSafeWindowPosition(savedPosition, windowSize);
+              await windowManager.setPosition(safePosition);
             }
             if (windowState['isMaximized'] as bool) {
               await windowManager.maximize();
@@ -117,6 +177,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => TodoList()),
         ChangeNotifierProvider(create: (_) => HabitList()),
+        ChangeNotifierProvider(create: (_) => FocusProvider()..initialize()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         Provider(create: (_) => StorageService()),
       ],

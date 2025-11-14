@@ -29,9 +29,7 @@ class _FocusScreenState extends State<FocusScreen> {
     final isTabletOrDesktop = deviceType == DeviceType.tablet || deviceType == DeviceType.desktop;
     final bool showWindowControls = !kIsWeb && Platform.isWindows && isTabletOrDesktop;
 
-    return ChangeNotifierProvider(
-      create: (_) => FocusProvider(),
-      child: Container(
+    return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -130,7 +128,6 @@ class _FocusScreenState extends State<FocusScreen> {
         ),
           ],
         ),
-      ),
     );
   }
 
@@ -225,55 +222,69 @@ class _FocusScreenState extends State<FocusScreen> {
     final isBreak = provider.currentSessionType != SessionType.focus;
     final primaryColor = isBreak ? Colors.green : Theme.of(context).colorScheme.primary;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Reset/Stop button
-        if (provider.status != TimerStatus.idle)
-          _buildControlButton(
-            icon: Icons.stop_rounded,
-            label: 'Stop',
-            onPressed: () => provider.stopTimer(),
-            isPrimary: false,
-            isDark: isDark,
-            isMobile: isMobile,
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Determine if we need compact layout
+        final isCompact = constraints.maxWidth < 400;
+        final buttonSpacing = isCompact ? 8.0 : (isMobile ? 12.0 : 16.0);
         
-        if (provider.status != TimerStatus.idle)
-          SizedBox(width: isMobile ? 16 : 24),
-        
-        // Main action button (Start/Pause)
-        _buildControlButton(
-          icon: provider.status == TimerStatus.running
-              ? Icons.pause_rounded
-              : Icons.play_arrow_rounded,
-          label: provider.status == TimerStatus.running ? 'Pause' : 'Start',
-          onPressed: () {
-            if (provider.status == TimerStatus.running) {
-              provider.pauseTimer();
-            } else {
-              provider.startTimer();
-            }
-          },
-          isPrimary: true,
-          isDark: isDark,
-          isMobile: isMobile,
-          primaryColor: primaryColor,
-        ),
-        
-        // Skip button (only during breaks)
-        if (isBreak && provider.status != TimerStatus.idle) ...[
-          SizedBox(width: isMobile ? 16 : 24),
-          _buildControlButton(
-            icon: Icons.skip_next_rounded,
-            label: 'Skip',
-            onPressed: () => provider.skipBreak(),
-            isPrimary: false,
-            isDark: isDark,
-            isMobile: isMobile,
-          ),
-        ],
-      ],
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: buttonSpacing,
+          runSpacing: 12,
+          children: [
+            // Reset/Stop button
+            if (provider.status != TimerStatus.idle)
+              _buildControlButton(
+                icon: Icons.stop_rounded,
+                label: 'Stop',
+                onPressed: () => provider.stopTimer(),
+                isPrimary: false,
+                isDark: isDark,
+                isMobile: isMobile,
+                isCompact: isCompact,
+              ),
+            
+            // Main action button (Start/Pause)
+            _buildControlButton(
+              icon: provider.status == TimerStatus.running
+                  ? Icons.pause_rounded
+                  : Icons.play_arrow_rounded,
+              label: provider.status == TimerStatus.running ? 'Pause' : 'Start',
+              onPressed: () {
+                if (provider.status == TimerStatus.running) {
+                  provider.pauseTimer();
+                } else {
+                  provider.startTimer();
+                }
+              },
+              isPrimary: true,
+              isDark: isDark,
+              isMobile: isMobile,
+              primaryColor: primaryColor,
+              isCompact: isCompact,
+            ),
+            
+            // Skip button (for both focus and break sessions)
+            if (provider.status != TimerStatus.idle)
+              _buildControlButton(
+                icon: Icons.skip_next_rounded,
+                label: 'Skip',
+                onPressed: () {
+                  if (isBreak) {
+                    provider.skipBreak();
+                  } else {
+                    provider.skipToBreak();
+                  }
+                },
+                isPrimary: false,
+                isDark: isDark,
+                isMobile: isMobile,
+                isCompact: isCompact,
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -284,9 +295,17 @@ class _FocusScreenState extends State<FocusScreen> {
     required bool isPrimary,
     required bool isDark,
     required bool isMobile,
+    bool isCompact = false,
     Color? primaryColor,
   }) {
     final color = primaryColor ?? Theme.of(context).colorScheme.primary;
+    
+    // Adjust padding based on screen size
+    final horizontalPadding = isCompact ? 16.0 : (isMobile ? 20.0 : 28.0);
+    final verticalPadding = isCompact ? 12.0 : (isMobile ? 14.0 : 18.0);
+    final iconSize = isCompact ? 20.0 : (isMobile ? 22.0 : 26.0);
+    final fontSize = isCompact ? 14.0 : (isMobile ? 15.0 : 17.0);
+    final iconTextSpacing = isCompact ? 6.0 : 8.0;
     
     return Material(
       color: Colors.transparent,
@@ -295,8 +314,8 @@ class _FocusScreenState extends State<FocusScreen> {
         borderRadius: BorderRadius.circular(24),
         child: Container(
           padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 24 : 32,
-            vertical: isMobile ? 16 : 20,
+            horizontal: horizontalPadding,
+            vertical: verticalPadding,
           ),
           decoration: BoxDecoration(
             color: isPrimary
@@ -321,13 +340,13 @@ class _FocusScreenState extends State<FocusScreen> {
                 color: isPrimary
                     ? Colors.white
                     : (isDark ? Colors.white : Colors.black87),
-                size: isMobile ? 24 : 28,
+                size: iconSize,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: iconTextSpacing),
               Text(
                 label,
                 style: GoogleFonts.inter(
-                  fontSize: isMobile ? 16 : 18,
+                  fontSize: fontSize,
                   fontWeight: FontWeight.w600,
                   color: isPrimary
                       ? Colors.white

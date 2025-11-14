@@ -14,6 +14,7 @@ class FocusProvider extends ChangeNotifier {
   int _completedFocusSessions = 0;
   int _totalFocusTimeToday = 0; // in seconds
   DateTime? _sessionStartTime;
+  DateTime? _lastTickTime;
   
   Timer? _timer;
   List<FocusSession> _todaySessions = [];
@@ -31,7 +32,18 @@ class FocusProvider extends ChangeNotifier {
   
   double get progress {
     final totalSeconds = _getCurrentSessionDuration() * 60;
-    return totalSeconds > 0 ? (_remainingSeconds / totalSeconds) : 0;
+    if (totalSeconds <= 0) return 0;
+    
+    // Add smooth interpolation for sub-second progress
+    if (_status == TimerStatus.running && _lastTickTime != null) {
+      final now = DateTime.now();
+      final millisSinceLastTick = now.difference(_lastTickTime!).inMilliseconds;
+      final subSecondProgress = millisSinceLastTick / 1000.0;
+      final smoothRemaining = _remainingSeconds - subSecondProgress;
+      return (smoothRemaining / totalSeconds).clamp(0.0, 1.0);
+    }
+    
+    return (_remainingSeconds / totalSeconds).clamp(0.0, 1.0);
   }
 
   String get formattedTime {
@@ -66,17 +78,25 @@ class FocusProvider extends ChangeNotifier {
     if (_status == TimerStatus.idle) {
       _sessionStartTime = DateTime.now();
     }
+    _lastTickTime = DateTime.now();
     
     _status = TimerStatus.running;
     _timer?.cancel();
     
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        _remainingSeconds--;
-        notifyListeners();
-      } else {
-        _onTimerComplete();
+    // Update every 100ms for smooth animation, but only decrement seconds when needed
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      final now = DateTime.now();
+      final elapsed = now.difference(_lastTickTime!).inSeconds;
+      
+      if (elapsed >= 1) {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+          _lastTickTime = now;
+        } else {
+          _onTimerComplete();
+        }
       }
+      notifyListeners(); // Notify every 100ms for smooth progress animation
     });
     
     notifyListeners();
@@ -97,6 +117,25 @@ class FocusProvider extends ChangeNotifier {
   }
 
   void skipToBreak() {
+    // Count as completed session if setting is enabled
+    if (_settings.countSkippedSessions && _currentSessionType == SessionType.focus) {
+      _completedFocusSessions++;
+      final elapsedMinutes = (_getCurrentSessionDuration() * 60 - _remainingSeconds) ~/ 60;
+      if (elapsedMinutes > 0) {
+        _totalFocusTimeToday += elapsedMinutes * 60;
+      }
+      
+      _todaySessions.add(FocusSession(
+        startTime: _sessionStartTime ?? DateTime.now(),
+        endTime: DateTime.now(),
+        durationMinutes: elapsedMinutes,
+        type: SessionType.focus,
+        completed: false, // Skipped, not completed
+      ));
+      
+      _saveFocusData();
+    }
+    
     stopTimer();
     _startBreak();
   }
@@ -140,17 +179,19 @@ class FocusProvider extends ChangeNotifier {
     
     notifyListeners();
     
-    // Auto-start next session based on settings
+    // Auto-start next session
     Future.delayed(const Duration(seconds: 1), () {
       if (_currentSessionType == SessionType.focus) {
-        if (_settings.autoStartBreaks) {
-          _startBreak();
-        }
+        _startBreak();
       } else {
+        // Break completed, start next focus session
+        _currentSessionType = SessionType.focus;
+        _resetTimer();
         if (_settings.autoStartFocus) {
-          _currentSessionType = SessionType.focus;
-          _resetTimer();
           startTimer();
+        } else {
+          _status = TimerStatus.idle;
+          notifyListeners();
         }
       }
     });

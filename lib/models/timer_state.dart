@@ -18,6 +18,7 @@ class TimerSettings {
   final int sessionsUntilLongBreak;
   final bool autoStartBreaks;
   final bool autoStartFocus;
+  final bool countSkippedSessions;
   final bool enableNotifications;
   final bool enableSound;
   final double soundVolume;
@@ -29,6 +30,7 @@ class TimerSettings {
     this.sessionsUntilLongBreak = 4,
     this.autoStartBreaks = false,
     this.autoStartFocus = false,
+    this.countSkippedSessions = false,
     this.enableNotifications = true,
     this.enableSound = true,
     this.soundVolume = 0.7,
@@ -41,6 +43,7 @@ class TimerSettings {
     int? sessionsUntilLongBreak,
     bool? autoStartBreaks,
     bool? autoStartFocus,
+    bool? countSkippedSessions,
     bool? enableNotifications,
     bool? enableSound,
     double? soundVolume,
@@ -52,6 +55,7 @@ class TimerSettings {
       sessionsUntilLongBreak: sessionsUntilLongBreak ?? this.sessionsUntilLongBreak,
       autoStartBreaks: autoStartBreaks ?? this.autoStartBreaks,
       autoStartFocus: autoStartFocus ?? this.autoStartFocus,
+      countSkippedSessions: countSkippedSessions ?? this.countSkippedSessions,
       enableNotifications: enableNotifications ?? this.enableNotifications,
       enableSound: enableSound ?? this.enableSound,
       soundVolume: soundVolume ?? this.soundVolume,
@@ -66,6 +70,7 @@ class TimerSettings {
       'sessionsUntilLongBreak': sessionsUntilLongBreak,
       'autoStartBreaks': autoStartBreaks,
       'autoStartFocus': autoStartFocus,
+      'countSkippedSessions': countSkippedSessions,
       'enableNotifications': enableNotifications,
       'enableSound': enableSound,
       'soundVolume': soundVolume,
@@ -80,6 +85,7 @@ class TimerSettings {
       sessionsUntilLongBreak: json['sessionsUntilLongBreak'] ?? 4,
       autoStartBreaks: json['autoStartBreaks'] ?? false,
       autoStartFocus: json['autoStartFocus'] ?? false,
+      countSkippedSessions: json['countSkippedSessions'] ?? false,
       enableNotifications: json['enableNotifications'] ?? true,
       enableSound: json['enableSound'] ?? true,
       soundVolume: json['soundVolume'] ?? 0.7,

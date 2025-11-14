@@ -148,6 +148,20 @@ class _FocusSettingsDialogState extends State<FocusSettingsDialog> {
                     ),
                     
                     const SizedBox(height: 32),
+                    _buildSectionTitle('Session Tracking', isDark),
+                    const SizedBox(height: 16),
+                    
+                    _buildSwitchSetting(
+                      'Count Skipped Sessions',
+                      'Count focus sessions as completed when skipped',
+                      _tempSettings.countSkippedSessions,
+                      (value) => setState(() {
+                        _tempSettings = _tempSettings.copyWith(countSkippedSessions: value);
+                      }),
+                      isDark,
+                    ),
+                    
+                    const SizedBox(height: 32),
                     _buildSectionTitle('Notifications', isDark),
                     const SizedBox(height: 16),
                     
