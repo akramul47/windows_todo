@@ -21,6 +21,8 @@ class FocusScreen extends StatefulWidget {
 }
 
 class _FocusScreenState extends State<FocusScreen> {
+  bool _isHovering = false;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -28,6 +30,7 @@ class _FocusScreenState extends State<FocusScreen> {
     final isMobile = deviceType == DeviceType.mobile;
     final isTabletOrDesktop = deviceType == DeviceType.tablet || deviceType == DeviceType.desktop;
     final bool showWindowControls = !kIsWeb && Platform.isWindows && isTabletOrDesktop;
+    final bool isDesktopOrWeb = kIsWeb || (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux));
 
     return Container(
         decoration: BoxDecoration(
@@ -59,9 +62,12 @@ class _FocusScreenState extends State<FocusScreen> {
                 Expanded(
                   child: SafeArea(
                     top: !showWindowControls, // No top safe area on Windows tablet/desktop
-                    child: Consumer<FocusProvider>(
-                      builder: (context, focusProvider, child) {
-                        return Column(
+                    child: MouseRegion(
+                      onEnter: (_) => setState(() => _isHovering = true),
+                      onExit: (_) => setState(() => _isHovering = false),
+                      child: Consumer<FocusProvider>(
+                        builder: (context, focusProvider, child) {
+                          return Column(
                           children: [
                             // Header with settings
                             _buildHeader(context, focusProvider, isDark, isMobile),
@@ -70,35 +76,68 @@ class _FocusScreenState extends State<FocusScreen> {
                               child: SingleChildScrollView(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: isMobile ? 24 : 40,
-                                  vertical: 20,
                                 ),
                                 child: Column(
                                   children: [
-                                    SizedBox(height: isMobile ? 10 : 20),
+                                    // Main content area with timer centered
+                                    SizedBox(
+                                      height: MediaQuery.of(context).size.height * 
+                                        (isMobile ? 0.55 : 0.6),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          SizedBox(height: isMobile ? 20 : 30),
+                                          
+                                          // Session type label with hover animation - use Opacity to keep space
+                                          Opacity(
+                                            opacity: (isDesktopOrWeb && !isMobile) 
+                                              ? (_isHovering ? 1.0 : 0.0) 
+                                              : 1.0,
+                                            child: _buildSessionLabel(focusProvider, isDark, isMobile),
+                                          ),
+                                          
+                                          const SizedBox(height: 100),
+                                          
+                                          // Circular timer
+                                          _buildTimerDisplay(context, focusProvider, isDark, isMobile),
+                                        ],
+                                      ),
+                                    ),
                                     
-                                    // Session type label
-                                    _buildSessionLabel(focusProvider, isDark),
+                                    // Bottom section with Quick Start and Buttons
+                                    Column(
+                                      children: [
+                                        const SizedBox(height: 10),
+                                        
+                                        // Quick duration selector (above buttons) - hide with hover on desktop/web
+                                        // Also hide during break session
+                                        Opacity(
+                                          opacity: (focusProvider.status == TimerStatus.idle && 
+                                              focusProvider.currentSessionType == SessionType.focus &&
+                                              ((isDesktopOrWeb && !isMobile) ? _isHovering : true))
+                                            ? 1.0 
+                                            : 0.0,
+                                          child: _buildDurationSelector(focusProvider, isDark, isMobile),
+                                        ),
+                                        
+                                        const SizedBox(height: 24),
+                                        
+                                        // Control buttons (at bottom) with hover animation - use Opacity to keep space
+                                        Opacity(
+                                          opacity: (isDesktopOrWeb && !isMobile) 
+                                            ? (_isHovering ? 1.0 : 0.0) 
+                                            : 1.0,
+                                          child: _buildControlButtons(context, focusProvider, isDark, isMobile),
+                                        ),
+                                        
+                                        const SizedBox(height: 64),
+                                      ],
+                                    ),
                                     
-                                    const SizedBox(height: 32),
-                                    
-                                    // Circular timer
-                                    _buildTimerDisplay(context, focusProvider, isDark, isMobile),
-                                    
-                                    const SizedBox(height: 48),
-                                    
-                                    // Control buttons
-                                    _buildControlButtons(context, focusProvider, isDark, isMobile),
-                                    
-                                    const SizedBox(height: 40),
-                                    
-                                    // Quick duration selector
-                                    if (focusProvider.status == TimerStatus.idle)
-                                      _buildDurationSelector(focusProvider, isDark, isMobile),
-                                    
-                                    const SizedBox(height: 32),
-                                    
-                                    // Statistics
+                                    // Statistics (scrollable - below the fold)
                                     _buildStatistics(focusProvider, isDark, isMobile),
+                                    
+                                    const SizedBox(height: 32),
                                   ],
                                 ),
                               ),
@@ -106,6 +145,7 @@ class _FocusScreenState extends State<FocusScreen> {
                           ],
                         );
                       },
+                      ),
                     ),
                   ),
                 ),
@@ -158,45 +198,60 @@ class _FocusScreenState extends State<FocusScreen> {
     );
   }
 
-  Widget _buildSessionLabel(FocusProvider provider, bool isDark) {
+  Widget _buildSessionLabel(FocusProvider provider, bool isDark, bool isMobile) {
     final isBreak = provider.currentSessionType != SessionType.focus;
+    final color = isBreak ? Colors.green : Theme.of(context).colorScheme.primary;
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 20 : 24,
+        vertical: isMobile ? 10 : 12,
+      ),
       decoration: BoxDecoration(
-        color: (isBreak
-                ? Colors.green
-                : Theme.of(context).colorScheme.primary)
-            .withOpacity(isDark ? 0.2 : 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (isBreak
-                  ? Colors.green
-                  : Theme.of(context).colorScheme.primary)
-              .withOpacity(0.3),
-          width: 1,
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(isDark ? 0.25 : 0.15),
+            color.withOpacity(isDark ? 0.15 : 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: color.withOpacity(isDark ? 0.4 : 0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            isBreak ? Icons.coffee_outlined : Icons.psychology_outlined,
-            size: 18,
-            color: isBreak
-                ? Colors.green
-                : Theme.of(context).colorScheme.primary,
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isBreak ? Icons.coffee_rounded : Icons.psychology_rounded,
+              size: isMobile ? 16 : 18,
+              color: color,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Text(
             provider.sessionTypeLabel,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isBreak
-                  ? Colors.green
-                  : Theme.of(context).colorScheme.primary,
-              letterSpacing: 0.5,
+            style: GoogleFonts.outfit(
+              fontSize: isMobile ? 14 : 15,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.8,
             ),
           ),
         ],
